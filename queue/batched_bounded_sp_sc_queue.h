@@ -1,0 +1,254 @@
+#ifndef LOCK_FREE_BATCHED_BOUNDED_SP_SC_QUEUE_H
+#define LOCK_FREE_BATCHED_BOUNDED_SP_SC_QUEUE_H
+
+#include <memory>
+#include <cmath>
+#include <atomic>
+#include <type_traits>
+#include <array>
+#include <cassert>
+#include <utility>
+#include <climits>
+#include <cstring>
+
+namespace concurrent::queue {
+
+    namespace details {
+
+        constexpr size_t kDefaultSlotSize = 16;
+
+        template <typename T, size_t Size = kDefaultSlotSize>
+        class SPSCQueueSlot {
+        public:
+            T* Front();
+
+            template <typename... Args>
+            void Emplace(Args&&... args);
+
+            void Dequeue();
+
+            bool IsEmpty();
+            bool IsFull();
+
+        private:
+            T buffer_[Size];
+            size_t head_{0};
+            size_t tail_{0};
+
+        };
+
+    }
+
+    template <typename T, size_t Capacity>
+    class BatchedBoundedSPSCQueue final {
+    public:
+        BatchedBoundedSPSCQueue() = default;
+
+        BatchedBoundedSPSCQueue(const BatchedBoundedSPSCQueue&) = delete;
+        BatchedBoundedSPSCQueue(BatchedBoundedSPSCQueue&&) = delete;
+        BatchedBoundedSPSCQueue& operator=(const BatchedBoundedSPSCQueue&) = delete;
+        BatchedBoundedSPSCQueue& operator=(BatchedBoundedSPSCQueue&&) = delete;
+
+        T* Front();
+
+        template <typename... Args>
+        bool Emplace(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>);
+
+        template <typename = std::enable_if_t<std::is_copy_constructible_v<T>, bool>>
+        bool Enqueue(const T& element) noexcept(std::is_nothrow_copy_constructible_v<T>);
+
+        template <typename = std::enable_if_t<std::is_move_constructible_v<T>, bool>>
+        bool Enqueue(T&& element) noexcept(std::is_nothrow_move_constructible_v<T>);
+
+        bool Dequeue();
+
+        bool IsEmptyConsumer();
+        size_t GetCapacity() const noexcept;
+
+        ~BatchedBoundedSPSCQueue() = default;
+
+    private:
+        static constexpr size_t GetBufferSize();
+        static constexpr size_t GetIndexMask();
+
+#ifdef __cpp_lib_hardware_interference_size
+        static constexpr size_t kCacheLineSize =
+      std::hardware_destructive_interference_size;
+#else
+        static constexpr size_t kCacheLineSize = 64;
+#endif
+
+        bool MoveHead(size_t& head);
+
+    private:
+        char padding0_[kCacheLineSize];
+
+        details::SPSCQueueSlot<T> buffer_[GetBufferSize()];
+
+        char padding1_[kCacheLineSize];
+
+        alignas(kCacheLineSize) std::atomic<size_t> tail_{0};
+        size_t cached_head_{0};
+
+        char padding2_[kCacheLineSize - sizeof(std::atomic<size_t>) - sizeof(size_t)];
+
+        alignas(kCacheLineSize) std::atomic<size_t> head_{0};
+        size_t cached_tail_{0};
+
+        char padding3_[kCacheLineSize];
+    };
+
+
+    // Implementation
+
+    template<typename T, size_t Capacity>
+    template<typename... Args>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::Emplace(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args...>) {
+        const size_t tail = tail_.load(std::memory_order_acquire);
+        size_t next_tail = (tail + 1) & GetIndexMask();
+
+        if (next_tail == cached_head_) {
+            cached_head_ = head_.load(std::memory_order_acquire);
+            if (next_tail == cached_head_) {
+                return false;
+            }
+        }
+
+        new (&buffer_[tail]) T(std::forward<Args>(args)...);
+        tail_.store(next_tail, std::memory_order_release);
+
+        return true;
+    }
+
+    template<typename T, size_t Capacity>
+    template<typename>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::Enqueue(const T& element) noexcept(std::is_nothrow_copy_constructible_v<T>) {
+        return Emplace(element);
+    }
+
+    template<typename T, size_t Capacity>
+    template<typename>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::Enqueue(T&& element) noexcept(std::is_nothrow_move_constructible_v<T>) {
+        return Emplace(std::forward<T&&>(element));
+    }
+
+    template<typename T, size_t Capacity>
+    T* BatchedBoundedSPSCQueue<T, Capacity>::Front() {
+        size_t head = head_.load(std::memory_order_acquire);
+
+        if (buffer_[head].IsEmpty()) { //todo
+            if (!MoveHead(head)) {
+                return nullptr;
+            }
+        }
+
+        return buffer_[head].Front();
+    }
+
+    template <typename T, size_t Capacity>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::Dequeue() {
+        size_t head = head_.load(std::memory_order_acquire);
+
+        if (buffer_[head].IsEmpty()) {
+            if (!MoveHead(head)) {
+                return false;
+            }
+        }
+
+        buffer_[head].Dequeue();
+        return true;
+    }
+
+    template<typename T, size_t Capacity>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::MoveHead(size_t& head) {
+        if (head == cached_tail_) {
+            cached_tail_ = tail_.load(std::memory_order_acquire);
+            if (head == cached_tail_) {
+                return false;
+            }
+        }
+
+        head = (head + 1) & GetIndexMask();
+        head_.store(head, std::memory_order_release);
+        return true;
+    }
+
+    template <typename T, size_t Capacity>
+    bool BatchedBoundedSPSCQueue<T, Capacity>::IsEmptyConsumer() {
+        return !Front();
+    }
+
+    /*template<typename T, size_t Capacity>
+    requires details::IsTriviallyCopyable<T>
+    size_t BatchedBoundedSPSCQueue<T, Capacity>::GetSizeProducer() const noexcept {
+        std::ptrdiff_t size = tail_.load(std::memory_order_acquire) - head_.load(std::memory_order_acquire);
+        if (size < 0) {
+            size += GetBufferSize();
+        }
+        return static_cast<size_t>(size);
+    }*/
+
+
+    template<typename T, size_t Capacity>
+    size_t BatchedBoundedSPSCQueue<T, Capacity>::GetCapacity() const noexcept {
+        return GetBufferSize();
+    }
+
+
+    template<typename T, size_t Capacity>
+    constexpr size_t BatchedBoundedSPSCQueue<T, Capacity>::GetBufferSize() {
+        size_t capacity = Capacity + 1;
+        if (capacity < 4) {
+            capacity = 4;
+        }
+
+        int max_bits_number = sizeof(size_t) * CHAR_BIT - 1;
+        capacity = 1 << (max_bits_number - __builtin_clzll(capacity) + 1);
+
+        assert((capacity & (capacity - 1)) == 0); // is power of two
+
+        return capacity;
+    }
+
+    template<typename T, size_t Capacity>
+    constexpr size_t BatchedBoundedSPSCQueue<T, Capacity>::GetIndexMask() {
+        return GetBufferSize() - 1;
+    }
+
+
+    namespace details {
+
+        template<typename T, size_t Size>
+        template<typename... Args>
+        void SPSCQueueSlot<T, Size>::Emplace(Args &&... args) {
+            new (&buffer_[tail_]) T(std::forward<Args>(args)...);
+            tail_++;
+        }
+
+        template<typename T, size_t Size>
+        void SPSCQueueSlot<T, Size>::Dequeue() {
+            head_++;
+        }
+
+        template<typename T, size_t Size>
+        T *SPSCQueueSlot<T, Size>::Front() {
+            return &buffer_[head_];
+        }
+
+        template<typename T, size_t Size>
+        bool SPSCQueueSlot<T, Size>::IsEmpty() {
+            return head_ == tail_;
+        }
+
+        template<typename T, size_t Size>
+        bool SPSCQueueSlot<T, Size>::IsFull() {
+            return tail_ == Size;
+        }
+
+    }
+
+} // End of namespace concurrent::queue
+
+#endif //LOCK_FREE_BATCHED_BOUNDED_SP_SC_QUEUE_H
+
+//g++ -std=c++20 SPSCQueue.h batched_bounded_sp_sc_queue.h bounded_sp_sc_queue.h benchmarks.cpp
