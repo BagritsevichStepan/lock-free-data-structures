@@ -166,7 +166,7 @@ auto producer = std::thread([&stack]() {
    }
 });
 ```
-Lock free stack implementation based on lock free atomic shared pointer implementation.
+Lock free stack implementation based on [lock free atomic shared pointer](https://www.youtube.com/watch?v=gTpubZ8N0no) implementation.
 
 It is a list of nodes, whose references are stored as `SharedPtr`. The reference to the head is `AtomicSharedPtr`.
 
