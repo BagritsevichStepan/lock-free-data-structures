@@ -10,12 +10,13 @@ All implementations are faster than their analogs from other libraries, such as 
     * [Batched Implementation](#spsc_queue_batched_impl)
     * [Benchmarks](#spsc_queue_bench)
 + [MPMCQueue](#mpmcqueue)
+    * [Generations Approach](#mpmc_queue_generation)
+    * [Benchmarks](#mpmc_queue_bench)
++ [Stack](#stack)
     * [ABA Problem](#)
     * [Reclamation Problem](#)
-    * [Benchmarks](#)
-+ [Stack](#stack)
-    * [SpinLock Implementation]
-    * [DCAS Lock-Free Stack]
+    * [SpinLock Implementation](#)
+    * [DCAS Lock-Free Stack](#)
     * [Benchmarks](#)
 + [Lock](#lock)
     * [SpinLock](#)
@@ -84,9 +85,38 @@ To get full information on how the measurements were taking, please see [Benchma
 | `moodycamel::ReaderWriterQueue` | tmp | tmp |
 
 # MPMCQueue
+```cpp
+const size_t capacity = 400;
+concurrent::queue::BoundedMPMCQueue<int, capacity> q;
+for (int t = 0; t < 3; t++) {
+   consumers.emplace_back([&q]() {
+      int result = 0;
+      for (int i = 0; i < 100; i++) {
+         q.Dequeue(result);
+      }
+   });
+   producers.emplace_back([&q]() {
+      for (int i = 0; i < 100; i++) {
+         q.Emplace(i);
+      }
+   });
+}
+```
 
-## Batched Implementation
+### <a name="mpmc_queue_generation"></a>Generations Approach
 todo
+
+## <a name="mpmc_queue_bench"></a>Benchmarks. TODO
+Benchmark measures throughput between 2 threads for a queue of `int` items.
+
+To get full information on how the measurements were taking, please see [Benchmarking](#benchmarking) chapter.
+
+| Queue | Throughput (ops/ms) | Latency RTT (ns) |
+| --- | --- | --- |
+| `BoundedSPSCQueue` | tmp | tmp |
+| `boost::lockfree::spsc_queue` | tmp | tmp |
+| `moodycamel::ReaderWriterQueue` | tmp | tmp |
+
 # Stack
 todo
 
