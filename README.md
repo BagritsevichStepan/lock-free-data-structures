@@ -15,8 +15,8 @@ All implementations are faster than their analogs from other libraries, such as 
 + [Stack](#stack)
     * [Reclamation Problem](#stack_reclamation)
     * [ABA Problem](#stack_aba)
-    * [SpinLock Implementation](#stack_spin_lock)
     * [DCAS Lock-Free Stack](#stack_lock_free)
+    * [SpinLock Implementation](#stack_spin_lock)
     * [Benchmarks](#stack_bench)
 + [Lock](#lock)
     * [Fast SpinLock](#lock_spinlock)
@@ -118,7 +118,9 @@ To get full information on how the measurements were taking, please see [Benchma
 | `moodycamel::ReaderWriterQueue` | tmp | tmp |
 
 # Stack
-Fast concurrent stack implementations. 
+Fast concurrent stack implementations.
+
+Concurrent stack implementation should be resistant to the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
 
 Note that the blocking stack ([`concurrent::stack::UnboundedSpinLockedStack`](#stack_spin_lock)) works faster than lock-free ([`concurrent::stack::UnboundedLockFreeStack`](#stack_lock_free)), so it's better to use it.
 
@@ -142,29 +144,6 @@ The [ABA problem](https://en.wikipedia.org/wiki/ABA_problem) is very similar to 
 
 While one thread executed `if (!node) return false`, the second deleted this node. The third thread executed `Pop` method (so, it deleted `node->next`) and then pushed `node` again. Thus, in the first thread `head.compare_exchange_weak(node, node->next)` will return true. As a result, we will get an invalid stack.
 
-## <a name="stack_spin_lock"></a>SpinLock Implementation
-```cpp
-concurrent::stack::UnboundedSpinLockedStack<int> stack;
-auto consumer = std::thread([&stack]() {
-   int result = 0;
-   for (int i = 0; i < 100; i++) {
-      while (!stack.Pop(result));
-   }
-});
-auto producer = std::thread([&stack]() {
-   for (int i = 0; i < 100; i++) {
-      stack.Push(i);
-   }
-});
-```
-Blocked stack implementation.
-
-It uses the basic `std::stack` implementation and fast [`SpinLock`](#lock_spinlock) implementation.
-
-Also, you can pass your own single-threaded stack and lock implementations. For this, use `concurrent::stack::UnboundedLockedStack`.
-
-For example, [`concurrent::stack::UnboundedMutexLockedStack`](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/stack/unbounded_locked_stack.h) uses `std::mutex` instead of `SpinLock`.
-
 ## <a name="stack_lock_free"></a>DCAS Lock-Free Stack
 ```cpp
 concurrent::stack::UnboundedLockFreeStack<int> stack;
@@ -187,6 +166,29 @@ It is a list of nodes, whose references are stored as `SharedPtr`. The reference
 Thus, with this approach, we solve the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
 
 `UnboundedLockFreeStack` uses simple hack. Inside 64-bit pointer there is 16-bit reference counter. You can do it as long as your addresses can fit in 48-bit (this is true on most platforms).
+
+## <a name="stack_spin_lock"></a>SpinLock Implementation
+```cpp
+concurrent::stack::UnboundedSpinLockedStack<int> stack;
+auto consumer = std::thread([&stack]() {
+   int result = 0;
+   for (int i = 0; i < 100; i++) {
+      while (!stack.Pop(result));
+   }
+});
+auto producer = std::thread([&stack]() {
+   for (int i = 0; i < 100; i++) {
+      stack.Push(i);
+   }
+});
+```
+Blocked stack implementation.
+
+It uses the basic `std::stack` implementation and fast [`SpinLock`](#lock_spinlock) implementation.
+
+Also, you can pass your own single-threaded stack and lock implementations. For this, use `concurrent::stack::UnboundedLockedStack`.
+
+For example, [`concurrent::stack::UnboundedMutexLockedStack`](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/stack/unbounded_locked_stack.h) uses `std::mutex` instead of `SpinLock`.
 
 ## <a name="stack_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
