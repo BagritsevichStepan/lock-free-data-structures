@@ -13,8 +13,8 @@ All implementations are faster than their analogs from other libraries, such as 
     * [Generations Approach](#mpmc_queue_generation)
     * [Benchmarks](#mpmc_queue_bench)
 + [Stack](#stack)
-    * [ABA Problem](#stack_aba)
     * [Reclamation Problem](#stack_reclamation)
+    * [ABA Problem](#stack_aba)
     * [SpinLock Implementation](#stack_spin_lock)
     * [DCAS Lock-Free Stack](#stack_lock_free)
     * [Benchmarks](#stack_bench)
@@ -122,11 +122,25 @@ Fast concurrent stack implementations.
 
 Note that the blocking stack ([`concurrent::stack::UnboundedSpinLockedStack`](#stack_spin_lock)) works faster than lock-free ([`concurrent::stack::UnboundedLockFreeStack`](#stack_lock_free)), so it's better to use it.
 
-### <a name="stack_aba"></a>ABA Problem. TODO
-In multithreaded computing, the ABA problem occurs during synchronization, when a location is read twice, has the same value for both reads, and the read value being the same twice is used to conclude that nothing has happened in the interim; however, another thread can execute between the two reads and change the value, do other work, then change the value back, thus fooling the first thread into thinking nothing has changed even though the second thread did work that violates that assumption.
+### <a name="stack_reclamation"></a>Reclamation Problem
+[Reclamation Problem](https://arxiv.org/pdf/1712.01044.pdf) is a typical problem for concurrent data structures. For concurrent stack, the problem is in the `Pop` method:
+```cpp
+bool Pop(T& data) {
+   Node* node = head.load();
+   do {
+      if (!node) return false;
+   } while (!head.compare_exchange_weak(node, node->next));
+   ...
+   delete node;
+   ...
+}
+```
+While one thread executed `if (!node) return false`, the second deleted this node. In the line `while (!head.compare_exchange_weak(node, node->next))` we will use the deleted data. According to the C++ standard, this is undefined behavior.
 
-### <a name="stack_reclamation"></a>Reclamation Problem. TODO
-Memory reclamation for sequential or lock-based data structures is typically easy. However, memory reclamation for lock-free data structures is a significant challenge. Automatic techniques such as garbage collection are inefficient or use locks, and non-automatic techniques either have high overhead, or do not work for many reasonably simple data structures.
+### <a name="stack_aba"></a>ABA Problem
+The [ABA problem](https://en.wikipedia.org/wiki/ABA_problem) is very similar to the reclamation problem. The problem is again in the `Pop` method.
+
+While one thread executed `if (!node) return false`, the second deleted this node. The third thread executed `Pop` method (so, it deleted `node->next`) and then pushed `node` again. Thus, in the first thread `head.compare_exchange_weak(node, node->next)` will return true. As a result, we will get an invalid stack.
 
 ## <a name="stack_spin_lock"></a>SpinLock Implementation
 ```cpp
