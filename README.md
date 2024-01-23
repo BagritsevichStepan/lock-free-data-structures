@@ -25,9 +25,6 @@ All implementations are faster than their analogs from other libraries, such as 
 + [Benchmarking](#benchmarking)
     * [Tuning](#bench_tuning)
 + [References](#references)
-    * [Queues](#references_queue)
-    * [Stacks](#references_stack)
-    * [Locks](#references_lock)
 
 # SPSCQueue
 ```cpp
@@ -134,16 +131,16 @@ todo
 todo
 
 # References
-## <a name="references_queue"></a>Queues
+Queues:
 * [Bounded MPMC queue](https://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue)
 * [Toward high-throughput algorithms on many-core architectures](https://dl.acm.org/doi/10.1145/2086696.2086728)
 * [The Baskets Queue](http://people.csail.mit.edu/shanir/publications/Baskets%20Queue.pdf)
 
-## <a name="references_stack"></a>Stacks
+Stacks:
 * [Lock-free Atomic Shared Pointers Without a Split Reference Count?](https://www.youtube.com/watch?app=desktop&v=lNPZV9Iqo3U)
 * [A Scalable Lock-free Stack Algorithm](https://people.csail.mit.edu/shanir/publications/Lock_Free.pdf)
 
-## <a name="references_lock"></a>Locks
+Locks:
 * [Using locks in real-time audio processing, safely](https://timur.audio/using-locks-in-real-time-audio-processing-safely)
 * [Can Seqlocks Get Along With Programming Language Memory Models?](https://www.hpl.hp.com/techreports/2012/HPL-2012-68.pdf)
 * [Byte-wise atomic memcpy](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1478r7.html)
