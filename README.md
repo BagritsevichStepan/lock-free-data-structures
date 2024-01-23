@@ -110,7 +110,8 @@ Note that some optimizations from `concurrent::queue::BoundedSPSCQueue` are used
 MPMCQueue implementation should be resistant to the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
 
 ### <a name="mpmc_queue_generation"></a>Generations Approach
-<img src="[drawing.jpg](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/MPMCQueue.jpg)" alt="MPMCQueue" width="70%"/>
+<img src="MPMCQueue.jpg" alt="MPMCQueue" width="70%"/>
+
 Generation approach is used to solve the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation). For this, each buffer element stores a version (or generation) with the data.
 
 An even generation means that the data is missing. Odd, on the contrary, that the cell is occupied.
