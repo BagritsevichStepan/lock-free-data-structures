@@ -5,7 +5,7 @@ All implementations are faster than their analogs from other libraries, such as 
 
 # Links
 + [SPSCQueue](#spscqueue)
-    * [Buffer](#spsc_queue_buffer)
+    * [Buffer. Huge Pages](#spsc_queue_buffer)
     * [Cache Coherence. False Sharing](#spsc_queue_false_sharing)
     * [Batched Implementation](#spsc_queue_batched_impl)
     * [Benchmarks](#spsc_queue_bench)
@@ -22,11 +22,12 @@ All implementations are faster than their analogs from other libraries, such as 
     * [SpinLock](#)
     * [SeqLock](#)
     * [Benchmarks](#)
-+ [Benchmarking]
-+ [References]
-    * [Queues](#)
-    * [Stacks](#)
-    * [Locks](#)
++ [Benchmarking](#benchmarking)
+    * [Tuning](#bench_tuning)
++ [References](#references)
+    * [Queues](#references_queue)
+    * [Stacks](#references_stack)
+    * [Locks](#references_lock)
 
 # SPSCQueue
 ```cpp
@@ -45,7 +46,7 @@ auto producer = std::thread([&q]() {
 ```
 A single producer single consumer lock-free queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer). This implementation is faster than [`boost::lockfree::spsc_queue`](https://www.boost.org/doc/libs/1_60_0/boost/lockfree/spsc_queue.hpp), [`moodycamel::ReaderWriterQueue`](https://github.com/cameron314/readerwriterqueue), [`folly::ProducerConsumerQueue`](https://github.com/facebook/folly/blob/main/folly/ProducerConsumerQueue.h) and others.
 
-### <a name="spsc_queue_buffer"></a>Buffer
+### <a name="spsc_queue_buffer"></a>Buffer. Huge Pages
 The queue is based on a ring buffer, the size of which is equal to the power of two. This allows to use bitwise operations instead of using the remainder of the division.
 
 The basic implementation assumes that allocation will occur on the stack (for this, `std::array` is used). But you can also use heap allocation for this along with the [Huge pages](https://wiki.debian.org/Hugepages) support.
@@ -128,4 +129,25 @@ todo
 todo
 
 # Benchmarking
+todo
+## <a name="bench_tuning"></a>Tuning
+todo
+
+# References
+## <a name="references_queue"></a>Queues
+* [Bounded MPMC queue](https://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue)
+* [Toward high-throughput algorithms on many-core architectures](https://dl.acm.org/doi/10.1145/2086696.2086728)
+* [The Baskets Queue](http://people.csail.mit.edu/shanir/publications/Baskets%20Queue.pdf)
+
+## <a name="references_stack"></a>Stacks
+* [Lock-free Atomic Shared Pointers Without a Split Reference Count?](https://www.youtube.com/watch?app=desktop&v=lNPZV9Iqo3U)
+* [A Scalable Lock-free Stack Algorithm](https://people.csail.mit.edu/shanir/publications/Lock_Free.pdf)
+
+## <a name="references_lock"></a>Locks
+* [Using locks in real-time audio processing, safely](https://timur.audio/using-locks-in-real-time-audio-processing-safely)
+* [Can Seqlocks Get Along With Programming Language Memory Models?](https://www.hpl.hp.com/techreports/2012/HPL-2012-68.pdf)
+* [Byte-wise atomic memcpy](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p1478r7.html)
+
+
+
 
