@@ -19,9 +19,9 @@ All implementations are faster than their analogs from other libraries, such as 
     * [DCAS Lock-Free Stack](#)
     * [Benchmarks](#)
 + [Lock](#lock)
-    * [SpinLock](#)
-    * [SeqLock](#)
-    * [Benchmarks](#)
+    * [SpinLock](#lock_spinlock)
+    * [SeqLock](#lock_seqlock)
+    * [Benchmarks](#lock_bench)
 + [Benchmarking](#benchmarking)
     * [Tuning](#bench_tuning)
 + [References](#references)
@@ -121,6 +121,8 @@ todo
 # Lock
 Several lock implementations that are faster than `std::mutex`.
 
+Both locks using `alignas` to the cache line to avoid [split lock](https://lwn.net/Articles/790464/). You can define your cache line size using `CACHE_LINE_SIZE` compiler flag (by default it is 64 bytes). See [`concurrent::cache::kCacheLineSize`](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/cache_line.h).
+
 ## <a name="lock_spinlock"></a>Fast SpinLock
 ```cpp
 concurrent::lock::SpinLock spin_lock;
@@ -135,6 +137,11 @@ auto reader = std::thread([&shared_data, &spin_lock]() {
    spin_lock.Unlock();
 });
 ```
+Faster implementation of `SpinLock` based on [test and test-and-set (TTAS)](https://en.wikipedia.org/wiki/Test_and_test-and-set) approach.
+
+Regarding to the coherency protocol ([MESI](https://en.wikipedia.org/wiki/MESI_protocol), [MOESI](https://en.wikipedia.org/wiki/MOESI_protocol), [MESIF](https://en.wikipedia.org/wiki/MESIF_protocol)), reading is much faster than writing. This is why `SpinLock` tries to load the value of the atomic flag more often than to exchange it.
+
+In addition, `SpinLock` uses `PAUSE` instruction when the loaded flag is locked. It is needed to reduce power usage and contention on the load-store units. See [concurrent::wait::Wait](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/wait.h).
 
 ## <a name="lock_seqlock"></a>SeqLock
 ```cpp
@@ -147,8 +154,10 @@ auto reader = std::thread([&shared_data]() {
    std::cout << shared_data.Load() << std::endl;
 });
 ```
+Implementation of the [SeqLock](https://en.wikipedia.org/wiki/Seqlock). 
 
-todo
+`SeqLock` is an alternative to the [readers–writer lock](https://en.wikipedia.org/wiki/Readers–writer_lock), which avoids the problem of writer starvation. It never blocks the reader, so it works fast in the programs with a large number of readers.
+
 ## <a name="lock_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
 
@@ -158,7 +167,7 @@ To get full information on how the measurements were taking, please see [Benchma
 | --- | --- | --- |
 | `concurrent::lock::SpinLock` | tmp | tmp |
 | `concurrent::lock::SeqLockAtomic` | tmp | tmp |
-| `moodycamel::ReaderWriterQueue` | tmp | tmp |
+| `std::mutex` | tmp | tmp |
 
 # Benchmarking
 todo
