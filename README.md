@@ -102,9 +102,20 @@ for (int t = 0; t < 3; t++) {
    });
 }
 ```
+A multi-producer multi-consumer lock-free queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer). TODO!!!!This implementation is faster than [`boost::lockfree::spsc_queue`](https://www.boost.org/doc/libs/1_60_0/boost/lockfree/spsc_queue.hpp), [`moodycamel::ReaderWriterQueue`](https://github.com/cameron314/readerwriterqueue), [`folly::ProducerConsumerQueue`](https://github.com/facebook/folly/blob/main/folly/ProducerConsumerQueue.h) and others.TODO!!!
+
+Note that some optimizations from `concurrent::queue::BoundedSPSCQueue` are used here, so please familiarize yourself with them first
+([Buffer. Huge Pages](#spsc_queue_buffer), [Cache Coherence. False Sharing](#spsc_queue_false_sharing), [Batched Implementation](#spsc_queue_batched_impl)).
+
+MPMCQueue implementation should be resistant to the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
 
 ### <a name="mpmc_queue_generation"></a>Generations Approach
-todo
+![Снимок экрана 2024-01-23 в 16 10 25](https://github.com/BagritsevichStepan/lock-free-data-structures/assets/43710058/c261aa34-39c6-4651-a45c-b3d6c076a952)
+Generation approach is used to solve the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation). For this, each buffer element stores a version (or generation) with the data.
+
+An odd generation means that the data is missing. Even, on the contrary, that the cell is occupied.
+
+Thus, each time we change the cell, we must increase the generation by one.
 
 ## <a name="mpmc_queue_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
