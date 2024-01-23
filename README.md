@@ -125,7 +125,7 @@ Concurrent stack implementation should be resistant to the [ABA](#stack_aba) and
 Note that the blocking stack ([`concurrent::stack::UnboundedSpinLockedStack`](#stack_spin_lock)) works faster than lock-free ([`concurrent::stack::UnboundedLockFreeStack`](#stack_lock_free)), so it's better to use it.
 
 ### <a name="stack_reclamation"></a>Reclamation Problem
-[Reclamation Problem](https://arxiv.org/pdf/1712.01044.pdf) is a typical problem for concurrent data structures. For concurrent stack, the problem is in the `Pop` method:
+The [Reclamation Problem](https://arxiv.org/pdf/1712.01044.pdf) is a typical problem for concurrent data structures. For concurrent stack, the problem is in the `Pop` method:
 ```cpp
 bool Pop(T& data) {
    Node* node = head.load();
