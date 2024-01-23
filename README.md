@@ -21,6 +21,8 @@ All implementations are faster than their analogs from other libraries, such as 
 + [Lock](#lock)
     * [SpinLock](#lock_spinlock)
     * [SeqLock](#lock_seqlock)
+         * [C++ Memory Model Problem](#lock_memory_model)
+         * [Atomic Memcpy](#lock_atomic_memcpy)
     * [Benchmarks](#lock_bench)
 + [Benchmarking](#benchmarking)
     * [Tuning](#bench_tuning)
@@ -157,6 +159,51 @@ auto reader = std::thread([&shared_data]() {
 Implementation of the [SeqLock](https://en.wikipedia.org/wiki/Seqlock). 
 
 `SeqLock` is an alternative to the [readers–writer lock](https://en.wikipedia.org/wiki/Readers–writer_lock), which avoids the problem of writer starvation. It never blocks the reader, so it works fast in the programs with a large number of readers.
+
+Please use `concurrent::lock::SeqLockAtomic` to load and store your shared data. Internally, it uses `concurrent::lock::SeqLock` to synchronize reads and writes. 
+
+Also, `concurrent::lock::SeqLockAtomic` supports only **trivially copyable** types.
+
+### <a name="lock_memory_model"></a>C++ Memory Model Problem
+The main problem is to ensure that there is [happens before](https://en.wikipedia.org/wiki/Happened-before) relation between read and write operations.
+
+Read operation (pseudocode):
+```cpp
+do {
+   seq0 = atomic_load(seq, memory_order_acquire);
+   data_copy = atomic_load(data, memory_order_relaxed);
+   seq1 = atomic_load(seq, memory_order_release);
+} while (IsLocked(seq0) || seq0 != seq1);
+```
+Write operation (pseudocode):
+```cpp
+lock(seq, memory_order_acquire);
+atomic_store(data, desired_data, memory_order_relaxed);
+unlock(seq, memory_order_release);
+```
+
+The main problem is in the read operation, in the line `seq1 = atomic_load(seq, memory_order_release)`. C++ doesn't support atomic loading operation with `std::memory_order_release` memory order.
+
+To solve this problem, we can use `std::atomic_thread_fence`. The final solution looks like this:
+
+Read operation:
+```cpp
+do {
+   seq0 = seq_.load(std::memory_order_acquire);
+   details::atomic_memcpy_load(&data_copy, &data_, sizeof(data_));
+   std::atomic_thread_fence(std::memory_order_acquire);
+   seq1 = seq_lock_.seq_.load(std::memory_order_relaxed);
+} while (SeqLock::IsLocked(seq0) || seq0 != seq1);
+```
+Write operation:
+```cpp
+seq_lock_.Lock(std::memory_order_acquire);
+std::atomic_thread_fence(std::memory_order_release);
+atomic_memcpy_store(&data_, &desired_data, sizeof(data_));
+seq_lock_.Unlock(std::memory_order_release);
+```
+
+### <a name="lock_atomic_memcpy"></a>Atomic Memcpy
 
 ## <a name="lock_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
