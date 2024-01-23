@@ -143,7 +143,13 @@ auto producer = std::thread([&stack]() {
    }
 });
 ```
+Blocked stack implementation.
 
+It uses the basic `std::stack` implementation and fast [`SpinLock`](#lock_spinlock) implementation.
+
+Also, you can pass your own single-threaded stack and lock implementations. For this, use `concurrent::stack::UnboundedLockedStack`.
+
+For example, [`concurrent::stack::UnboundedMutexLockedStack`](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/stack/unbounded_locked_stack.h) uses `std::mutex` instead of `SpinLock`.
 
 ## <a name="stack_lock_free"></a>DCAS Lock-Free Stack
 ```cpp
@@ -160,6 +166,13 @@ auto producer = std::thread([&stack]() {
    }
 });
 ```
+Lock free stack implementation based on lock free atomic shared pointer implementation.
+
+It is a list of nodes, whose references are stored as `SharedPtr`. The reference to the head is `AtomicSharedPtr`.
+
+Thus, with this approach, we solve the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
+
+`UnboundedLockFreeStack` uses simple hack. Inside 64-bit pointer there is 16-bit reference counter. You can do it as long as your addresses can fit in 48-bit (this is true on most platforms).
 
 ## <a name="stack_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
