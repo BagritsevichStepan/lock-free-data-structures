@@ -19,7 +19,7 @@ All implementations are faster than their analogs from other libraries, such as 
     * [DCAS Lock-Free Stack](#)
     * [Benchmarks](#)
 + [Lock](#lock)
-    * [SpinLock](#lock_spinlock)
+    * [Fast SpinLock](#lock_spinlock)
     * [SeqLock](#lock_seqlock)
          * [C++ Memory Model Problem](#lock_memory_model)
          * [Atomic Memcpy](#lock_atomic_memcpy)
