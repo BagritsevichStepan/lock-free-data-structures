@@ -190,7 +190,7 @@ Read operation:
 ```cpp
 do {
    seq0 = seq_.load(std::memory_order_acquire);
-   details::atomic_memcpy_load(&data_copy, &data_, sizeof(data_));
+   atomic_memcpy_load(&data_copy, &data_, sizeof(data_));
    std::atomic_thread_fence(std::memory_order_acquire);
    seq1 = seq_lock_.seq_.load(std::memory_order_relaxed);
 } while (SeqLock::IsLocked(seq0) || seq0 != seq1);
@@ -204,6 +204,9 @@ seq_lock_.Unlock(std::memory_order_release);
 ```
 
 ### <a name="lock_atomic_memcpy"></a>Atomic Memcpy
+The other problem is that, `memcpy_load` and `memcpy_store` operations can be performed simultaneously in different threads. If they are not synchronized, then according to the C++ standard, this is undefined behavior.
+
+So we need to implement `atomic_memcpy_load` and `atomic_memcpy_store` operations.
 
 ## <a name="lock_bench"></a>Benchmarks. TODO
 Benchmark measures throughput between 2 threads for a queue of `int` items.
