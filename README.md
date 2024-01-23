@@ -119,14 +119,50 @@ To get full information on how the measurements were taking, please see [Benchma
 todo
 
 # Lock
+Several lock implementations that are faster than `std::mutex`.
+
+## <a name="lock_spinlock"></a>Fast SpinLock
+```cpp
+concurrent::lock::SpinLock spin_lock;
+auto writer = std::thread([&shared_data, &spin_lock]() {
+   spin_lock.Lock();
+   *shared_data = 15;
+   spin_lock.Unlock();
+});
+auto reader = std::thread([&shared_data, &spin_lock]() {
+   spin_lock.Lock();
+   std::cout << *shared_data << std::endl;
+   spin_lock.Unlock();
+});
+```
+
+## <a name="lock_seqlock"></a>SeqLock
+```cpp
+concurrent::lock::SeqLockAtomic<int> shared_data{5};
+auto writer = std::thread([&shared_data]() {
+   shared_data.Store(15);
+});
+auto reader = std::thread([&shared_data]() {
+   std::this_thread::sleep_for(1ms);
+   std::cout << shared_data.Load() << std::endl;
+});
+```
+
 todo
-## Fast SpinLock
-todo
-## SeqLock
-todo
+## <a name="lock_bench"></a>Benchmarks. TODO
+Benchmark measures throughput between 2 threads for a queue of `int` items.
+
+To get full information on how the measurements were taking, please see [Benchmarking](#benchmarking) chapter.
+
+| Queue | Throughput (ops/ms) | Latency RTT (ns) |
+| --- | --- | --- |
+| `concurrent::lock::SpinLock` | tmp | tmp |
+| `concurrent::lock::SeqLockAtomic` | tmp | tmp |
+| `moodycamel::ReaderWriterQueue` | tmp | tmp |
 
 # Benchmarking
 todo
+
 ## <a name="bench_tuning"></a>Tuning
 todo
 
