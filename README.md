@@ -285,8 +285,8 @@ do {
    seq0 = seq_.load(std::memory_order_acquire);
    atomic_memcpy_load(&data_copy, &data_, sizeof(data_));
    std::atomic_thread_fence(std::memory_order_acquire);
-   seq1 = seq_lock_.seq_.load(std::memory_order_relaxed);
-} while (SeqLock::IsLocked(seq0) || seq0 != seq1);
+   seq1 = seq_.load(std::memory_order_relaxed);
+} while (IsLocked(seq0) || seq0 != seq1);
 ```
 Write operation:
 ```cpp
