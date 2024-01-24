@@ -134,7 +134,7 @@ Fast concurrent stack implementations.
 
 Concurrent stack implementation should be resistant to the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation).
 
-Note that the blocking stack ([`concurrent::stack::UnboundedSpinLockedStack`](#stack_spin_lock)) works faster than lock-free ([`concurrent::stack::UnboundedLockFreeStack`](#stack_lock_free)), so it's better to use it.
+Note that the blocking stack ([`concurrent::stack::UnboundedSpinLockedStack`](#stack_spin_lock)) works faster than lock-free version ([`concurrent::stack::UnboundedLockFreeStack`](#stack_lock_free)), so it's better to use it.
 
 ### <a name="stack_reclamation"></a>Reclamation Problem
 The [Reclamation Problem](https://arxiv.org/pdf/1712.01044.pdf) is a typical problem for concurrent data structures. For concurrent stack, the problem is in the `Pop` method:
