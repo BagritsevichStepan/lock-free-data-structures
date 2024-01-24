@@ -114,7 +114,7 @@ MPMCQueue implementation should be resistant to the [ABA](#stack_aba) and the [R
 
 Generation approach is used to solve the [ABA](#stack_aba) and the [Reclamation Problem](#stack_reclamation). For this, each buffer element stores a version (or generation) with the data.
 
-An even generation means that the data is missing. Odd, on the contrary, that the cell is occupied.
+An even generation value means that the data is missing. Odd, on the contrary, that the cell is occupied.
 
 Thus, each time we change the cell, we must increase the generation by one.
 
