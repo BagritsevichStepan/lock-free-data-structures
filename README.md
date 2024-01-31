@@ -83,7 +83,7 @@ To get full information on how the measurements were taking, please see [Benchma
 | `concurrent::queue::BoundedSPSCQueue` | 61250 | 158 |
 | `boost::lockfree::spsc_queue` | 11345 | 449 |
 | `folly::ProducerConsumerQueue` | 14614 | 321 |
-| `moodycamel::ReaderWriterQueue` | tmp | tmp |
+| `moodycamel::ReaderWriterQueue` | 21815 | 273 |
 
 # MPMCQueue
 ```cpp
