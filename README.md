@@ -80,8 +80,9 @@ To get full information on how the measurements were taking, please see [Benchma
 
 | Queue | Throughput (ops/ms) | Latency RTT (ns) |
 | --- | --- | --- |
-| `BoundedSPSCQueue` | tmp | tmp |
-| `boost::lockfree::spsc_queue` | tmp | tmp |
+| `concurrent::queue::BoundedSPSCQueue` | 61250 | 158 |
+| `boost::lockfree::spsc_queue` | 11345 | 449 |
+| `folly::ProducerConsumerQueue` | 14614 | 321 |
 | `moodycamel::ReaderWriterQueue` | tmp | tmp |
 
 # MPMCQueue
@@ -118,16 +119,8 @@ An even generation value means that the data is missing. Odd, on the contrary, t
 
 Thus, each time we change the cell, we must increase the generation by one.
 
-## <a name="mpmc_queue_bench"></a>Benchmarks. TODO
-Benchmark measures throughput between 2 threads for a queue of `int` items.
-
-To get full information on how the measurements were taking, please see [Benchmarking](#benchmarking) chapter.
-
-| Queue | Throughput (ops/ms) | Latency RTT (ns) |
-| --- | --- | --- |
-| `BoundedSPSCQueue` | tmp | tmp |
-| `boost::lockfree::spsc_queue` | tmp | tmp |
-| `moodycamel::ReaderWriterQueue` | tmp | tmp |
+## <a name="mpmc_queue_bench"></a>Benchmarks.
+Comming soon...
 
 # Stack
 Fast concurrent stack implementations.
