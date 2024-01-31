@@ -76,7 +76,7 @@ namespace concurrent::stack {
     template<typename T, typename Lock, typename Stack>
     void UnboundedLockedStack<T, Lock, Stack>::Push(T&& element) {
         std::lock_guard<Lock> lock_guard{lock_};
-        return stack_.push(std::forward<T&&>(element));
+        return stack_.push(std::forward<T>(element));
     }
 
     template<typename T, typename Lock, typename Stack>

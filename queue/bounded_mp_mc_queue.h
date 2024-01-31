@@ -5,7 +5,8 @@
 #include <cassert>
 #include <utility>
 #include <type_traits>
-#include "../utils/cache_line.h"
+
+#include "cache_line.h"
 
 namespace concurrent::queue {
 
@@ -112,13 +113,13 @@ namespace concurrent::queue {
 
         template <typename T>
         T&& MPMCQueueSlot<T>::Move() noexcept {
-            return std::move((*static_cast<T*>(&data_)));
+            return std::move((*reinterpret_cast<T*>(&data_)));
         }
 
         template <typename T>
         template <typename>
         void MPMCQueueSlot<T>::Destroy() noexcept {
-            static_cast<T*>(&data_)->~T();
+            reinterpret_cast<T*>(&data_)->~T();
         }
 
         template <typename T>
@@ -150,7 +151,7 @@ namespace concurrent::queue {
 
         while (generation != buffer_[index].LoadGeneration());
 
-        buffer_[index].Emplace(std::forward<Args>(args)...);
+        buffer_[index].Construct(std::forward<Args>(args)...);
         buffer_[index].StoreGeneration(generation + 1);
     }
 
@@ -163,7 +164,7 @@ namespace concurrent::queue {
             const Generation generation = 2 * GetGeneration(tail);
             if (generation == buffer_[index].LoadGeneration()) {
                 if (tail_.compare_exchange_weak(tail, tail + 1)) {
-                    buffer_[index].Emplace(std::forward<Args>(args)...);
+                    buffer_[index].Construct(std::forward<Args>(args)...);
                     buffer_[index].StoreGeneration(generation + 1);
                     return true;
                 }
@@ -192,13 +193,13 @@ namespace concurrent::queue {
     template <typename T, size_t Capacity>
     template <typename>
     void BoundedMPMCQueue<T, Capacity>::Enqueue(T&& element) noexcept {
-        Emplace(std::forward<T&&>(element));
+        Emplace(std::forward<T>(element));
     }
 
     template <typename T, size_t Capacity>
     template <typename>
     bool BoundedMPMCQueue<T, Capacity>::TryEnqueue(T&& element) noexcept {
-        return TryEmplace(std::forward<T&&>(element));
+        return TryEmplace(std::forward<T>(element));
     }
 
 

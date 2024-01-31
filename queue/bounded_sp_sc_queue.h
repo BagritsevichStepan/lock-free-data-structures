@@ -9,7 +9,8 @@
 #include <cassert>
 #include <utility>
 #include <climits>
-#include "../utils/cache_line.h"
+
+#include "cache_line.h"
 
 namespace concurrent::queue {
 
@@ -110,7 +111,7 @@ namespace concurrent::queue {
     template<typename T, size_t Capacity>
     template<typename>
     bool BoundedSPSCQueue<T, Capacity>::Enqueue(T&& element) noexcept(std::is_nothrow_move_constructible_v<T>) {
-        return Emplace(std::forward<T&&>(element));
+        return Emplace(std::forward<T>(element));
     }
 
     template<typename T, size_t Capacity>

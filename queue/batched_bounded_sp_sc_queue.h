@@ -11,6 +11,8 @@
 #include <climits>
 #include <cstring>
 
+#include "cache_line.h"
+
 namespace concurrent::queue {
 
     namespace details {
@@ -71,31 +73,24 @@ namespace concurrent::queue {
         static constexpr size_t GetBufferSize();
         static constexpr size_t GetIndexMask();
 
-#ifdef __cpp_lib_hardware_interference_size
-        static constexpr size_t kCacheLineSize =
-      std::hardware_destructive_interference_size;
-#else
-        static constexpr size_t kCacheLineSize = 64;
-#endif
-
         bool MoveHead(size_t& head);
 
     private:
-        char padding0_[kCacheLineSize];
+        PADDING(padding0_, 0);
 
         details::SPSCQueueSlot<T> buffer_[GetBufferSize()];
 
-        char padding1_[kCacheLineSize];
+        PADDING(padding1_, 0);
 
-        alignas(kCacheLineSize) std::atomic<size_t> tail_{0};
+        alignas(concurrent::cache::kCacheLineSize) std::atomic<size_t> tail_{0};
         size_t cached_head_{0};
 
-        char padding2_[kCacheLineSize - sizeof(std::atomic<size_t>) - sizeof(size_t)];
+        PADDING(padding2_, sizeof(std::atomic<size_t>) + sizeof(size_t));
 
-        alignas(kCacheLineSize) std::atomic<size_t> head_{0};
+        alignas(concurrent::cache::kCacheLineSize) std::atomic<size_t> head_{0};
         size_t cached_tail_{0};
 
-        char padding3_[kCacheLineSize];
+        PADDING(padding3_, 0);
     };
 
 
@@ -129,7 +124,7 @@ namespace concurrent::queue {
     template<typename T, size_t Capacity>
     template<typename>
     bool BatchedBoundedSPSCQueue<T, Capacity>::Enqueue(T&& element) noexcept(std::is_nothrow_move_constructible_v<T>) {
-        return Emplace(std::forward<T&&>(element));
+        return Emplace(std::forward<T>(element));
     }
 
     template<typename T, size_t Capacity>
@@ -177,17 +172,6 @@ namespace concurrent::queue {
     bool BatchedBoundedSPSCQueue<T, Capacity>::IsEmptyConsumer() {
         return !Front();
     }
-
-    /*template<typename T, size_t Capacity>
-    requires details::IsTriviallyCopyable<T>
-    size_t BatchedBoundedSPSCQueue<T, Capacity>::GetSizeProducer() const noexcept {
-        std::ptrdiff_t size = tail_.load(std::memory_order_acquire) - head_.load(std::memory_order_acquire);
-        if (size < 0) {
-            size += GetBufferSize();
-        }
-        return static_cast<size_t>(size);
-    }*/
-
 
     template<typename T, size_t Capacity>
     size_t BatchedBoundedSPSCQueue<T, Capacity>::GetCapacity() const noexcept {

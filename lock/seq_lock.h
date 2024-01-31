@@ -76,10 +76,8 @@ namespace concurrent::lock {
         ~SeqLockAtomic() = default;
 
     private:
-
-
         SeqLock seq_lock_{};
-        std::atomic<T> data_;
+        T data_;
     };
 
 
@@ -91,20 +89,20 @@ namespace concurrent::lock {
     template<typename T>
     requires details::IsTriviallyCopyable<T>
     T SeqLockAtomic<T>::Load() {
-        T destiny;
+        T loaded;
         SeqLock::Counter seq0;
         SeqLock::Counter seq1;
 
         do {
             seq0 = seq_lock_.seq_.load(std::memory_order_acquire);
 
-            destiny = data_.load(std::memory_order_relaxed);
+            details::atomic_memcpy_load(&loaded, &data_, sizeof(loaded));
             std::atomic_thread_fence(std::memory_order_acquire);
 
             seq1 = seq_lock_.seq_.load(std::memory_order_relaxed);
         } while (SeqLock::IsLocked(seq0) || seq0 != seq1);
 
-        return destiny;
+        return loaded;
     }
 
     template<typename T>
@@ -113,7 +111,7 @@ namespace concurrent::lock {
         SeqLock::Counter seq = seq_lock_.Lock();
 
         std::atomic_thread_fence(std::memory_order_release);
-        data_.store(desired, std::memory_order_relaxed);
+        details::atomic_memcpy_store(&data_, &desired, sizeof(desired));
 
         seq_lock_.Unlock(seq);
     }
