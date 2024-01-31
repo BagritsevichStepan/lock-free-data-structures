@@ -202,7 +202,7 @@ Also, you can pass your own single-threaded stack and lock implementations. For 
 
 For example, [`concurrent::stack::UnboundedMutexLockedStack`](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/stack/unbounded_locked_stack.h) uses `std::mutex` instead of `SpinLock`.
 
-## <a name="stack_bench"></a>Benchmarks. TODO
+## <a name="stack_bench"></a>Benchmarks
 Benchmark measures throughput between 2 threads for a stack of `int` items.
 
 To get full information on how the measurements were taking, please see [Benchmarking](#benchmarking) chapter.
