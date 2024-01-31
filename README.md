@@ -119,7 +119,7 @@ An even generation value means that the data is missing. Odd, on the contrary, t
 
 Thus, each time we change the cell, we must increase the generation by one.
 
-## <a name="mpmc_queue_bench"></a>Benchmarks.
+## <a name="mpmc_queue_bench"></a>Benchmarks
 Comming soon...
 
 # Stack
@@ -296,7 +296,7 @@ The other problem is that, `memcpy_load` and `memcpy_store` operations can be pe
 
 So we need to implement `atomic_memcpy_load` and `atomic_memcpy_store` operations.
 
-## <a name="lock_bench"></a>Benchmarks.
+## <a name="lock_bench"></a>Benchmarks
 Comming soon...
 
 # Benchmarking
