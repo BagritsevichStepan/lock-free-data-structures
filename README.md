@@ -103,7 +103,7 @@ for (int t = 0; t < 3; t++) {
    });
 }
 ```
-A multi-producer multi-consumer lock-free queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer). TODO!!!!This implementation is faster than [`boost::lockfree::spsc_queue`](https://www.boost.org/doc/libs/1_60_0/boost/lockfree/spsc_queue.hpp), [`moodycamel::ReaderWriterQueue`](https://github.com/cameron314/readerwriterqueue), [`folly::ProducerConsumerQueue`](https://github.com/facebook/folly/blob/main/folly/ProducerConsumerQueue.h) and others.TODO!!!
+A multi-producer multi-consumer lock-free queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 
 Note that some optimizations from `concurrent::queue::BoundedSPSCQueue` are used here, so please familiarize yourself with them first
 ([Buffer. Huge Pages](#spsc_queue_buffer), [Cache Coherence. False Sharing](#spsc_queue_false_sharing), [Batched Implementation](#spsc_queue_batched_impl)).
