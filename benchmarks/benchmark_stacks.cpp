@@ -14,7 +14,7 @@
 
 namespace concurrent::benchmark::stacks {
 
-    template<typename Stack, size_t CpuNumber, typename... Args>
+    template<typename Stack, std::size_t CpuNumber, typename... Args>
     requires concurrent::benchmark::IsEven<CpuNumber>
     void MeasureThroughput(const IterationsCount iterations, std::array<int, CpuNumber> cpu, const std::string& stack_name, Args&&... args) {
         Stack stack{std::forward<Args>(args)...};
@@ -22,7 +22,7 @@ namespace concurrent::benchmark::stacks {
         std::vector<std::thread> consumers;
         std::vector<std::thread> producers;
 
-        for (size_t i = 0; i < CpuNumber / 2; ++i) {
+        for (int i = 0; i < CpuNumber / 2; ++i) {
             int cpu_number = cpu[i];
             consumers.emplace_back([&stack, iterations, cpu_number] {
                 concurrent::benchmark::PinThread(cpu_number);
@@ -35,7 +35,7 @@ namespace concurrent::benchmark::stacks {
 
         auto start = std::chrono::steady_clock::now(); // Start measure the time
 
-        for (size_t i = CpuNumber / 2; i < CpuNumber - 1; ++i) {
+        for (int i = CpuNumber / 2; i < CpuNumber - 1; ++i) {
             int cpu_number = cpu[i];
             producers.emplace_back([&stack, iterations, cpu_number] {
                 concurrent::benchmark::PinThread(cpu_number);
@@ -50,11 +50,11 @@ namespace concurrent::benchmark::stacks {
             stack.Push(i);
         }
 
-        for (size_t i = 0; i < producers.size(); ++i) {
+        for (int i = 0; i < producers.size(); ++i) {
             producers[i].join();
         }
 
-        for (size_t i = 0; i < consumers.size(); ++i) {
+        for (int i = 0; i < consumers.size(); ++i) {
             consumers[i].join();
         }
 

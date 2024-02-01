@@ -6,7 +6,7 @@
 namespace concurrent::lock {
 
     template <typename Derived>
-    class alignas(concurrent::cache::kCacheLineSize)  Lock {
+    class alignas(concurrent::cache::kCacheLineSize) Lock {
     public:
         Lock() = default;
 

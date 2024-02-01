@@ -12,7 +12,7 @@ namespace concurrent::benchmark {
 
     }
 
-    template<size_t Number>
+    template<auto Number>
     concept IsEven = !(Number & 1);
 
     inline constexpr int kSuccessfullyPinnedThread = 0;

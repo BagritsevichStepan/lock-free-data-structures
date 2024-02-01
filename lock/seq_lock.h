@@ -19,14 +19,14 @@ namespace concurrent::lock {
         using MaxBitsType = uintmax_t;
 
         template<typename T>
-        void atomic_memcpy_load(void* dest, const void* src, size_t from, size_t to);
+        void atomic_memcpy_load(void* dest, const void* src, std::size_t from, std::size_t to);
 
-        void atomic_memcpy_load(void* dest, const void* src, size_t count);
+        void atomic_memcpy_load(void* dest, const void* src, std::size_t count);
 
         template<typename T>
-        void atomic_memcpy_store(void* dest, const void* src, size_t from, size_t to);
+        void atomic_memcpy_store(void* dest, const void* src, std::size_t from, std::size_t to);
 
-        void atomic_memcpy_store(void* dest, const void* src, size_t count);
+        void atomic_memcpy_store(void* dest, const void* src, std::size_t count);
     }
 
     template<typename T>
@@ -145,33 +145,33 @@ namespace concurrent::lock {
     // details
     namespace details {
 
-        void atomic_memcpy_load(void* dest, const void* src, size_t count) {
-            const size_t max_bits_type_count = count / sizeof(MaxBitsType);
-            const size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
+        void atomic_memcpy_load(void* dest, const void* src, std::size_t count) {
+            const std::size_t max_bits_type_count = count / sizeof(MaxBitsType);
+            const std::size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
 
             atomic_memcpy_load<MaxBitsType>(dest, src, 0, max_bits_type_count);
             atomic_memcpy_load<char>(dest, src, max_bits_type_bytes_count, count);
         }
 
         template<typename T>
-        void atomic_memcpy_load(void* dest, const void* src, size_t from, size_t to) {
-            for (size_t i = from; i < to; ++i) {
+        void atomic_memcpy_load(void* dest, const void* src, std::size_t from, std::size_t to) {
+            for (std::size_t i = from; i < to; ++i) {
                 static_cast<T*>(dest)[i] = boost::atomic_ref<const T>(static_cast<const T*>(src)[i])
                         .load(boost::memory_order_relaxed);
             }
         }
 
-        void atomic_memcpy_store(void* dest, const void* src, size_t count) {
-            const size_t max_bits_type_count = count / sizeof(MaxBitsType);
-            const size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
+        void atomic_memcpy_store(void* dest, const void* src, std::size_t count) {
+            const std::size_t max_bits_type_count = count / sizeof(MaxBitsType);
+            const std::size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
 
             atomic_memcpy_store<MaxBitsType>(dest, src, 0, max_bits_type_count);
             atomic_memcpy_store<char>(dest, src, max_bits_type_bytes_count, count);
         }
 
         template<typename T>
-        void atomic_memcpy_store(void* dest, const void* src, size_t from, size_t to) {
-            for (size_t i = from; i < to; ++i) {
+        void atomic_memcpy_store(void* dest, const void* src, std::size_t from, std::size_t to) {
+            for (std::size_t i = from; i < to; ++i) {
                 boost::atomic_ref<T>(static_cast<T*>(dest)[i])
                         .store(static_cast<const T*>(src)[i], boost::memory_order_relaxed);
             }

@@ -13,7 +13,7 @@ int main() {
     int cpu1 = 0;
     int cpu2 = 1;
 
-    const size_t queueSize = 100000;
+    const std::size_t queueSize = 100000;
     const int64_t iterations = 100000;
 
     {

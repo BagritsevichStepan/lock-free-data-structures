@@ -38,7 +38,7 @@ namespace concurrent::stack {
 
         [[nodiscard]] bool IsEmpty() const;
 
-        template <typename... Args>
+        template<typename... Args>
         void Emplace(Args&&... args);
 
         void Push(const T& element);
@@ -61,7 +61,7 @@ namespace concurrent::stack {
     }
 
     template<typename T, typename Lock, typename Stack>
-    template <typename... Args>
+    template<typename... Args>
     void UnboundedLockedStack<T, Lock, Stack>::Emplace(Args&&... args) {
         std::lock_guard<Lock> lock_guard{lock_};
         return stack_.emplace(std::forward<Args>(args)...);

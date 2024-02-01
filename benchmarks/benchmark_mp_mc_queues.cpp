@@ -7,7 +7,7 @@ int main() {
     std::vector<std::thread> consumers;
     std::vector<std::thread> producers;
 
-    const size_t capacity = 400;
+    const std::size_t capacity = 400;
     concurrent::queue::BoundedMPMCQueue<int, capacity> q;
     for (int t = 0; t < 3; t++) {
         consumers.emplace_back([&q]() {

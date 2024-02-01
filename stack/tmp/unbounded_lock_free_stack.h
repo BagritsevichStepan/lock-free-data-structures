@@ -8,7 +8,7 @@ namespace concurrent::stack {
 
     namespace details {
 
-        template <typename T>
+        template<typename T>
         using Pointer = T*;
 
         using PointersCount = int16_t;
@@ -22,12 +22,12 @@ namespace concurrent::stack {
             return static_cast<PointersCount>(counted_pointer >> kCountedPointerAddressSize);
         }
 
-        template <typename T>
+        template<typename T>
         Pointer<T> GetPointer(CountedPointer counted_pointer) {
             return reinterpret_cast<Pointer<T>>(counted_pointer & kCountedPointerAddressMask);
         }
 
-        template <typename T>
+        template<typename T>
         CountedPointer GetCountedPointer(PointersCount pointers_count, Pointer<T> pointer) {
             return (reinterpret_cast<CountedPointer>(pointer) & kCountedPointerAddressMask)
                    | (static_cast<CountedPointer>(pointers_count) << kCountedPointerAddressSize);
@@ -64,7 +64,7 @@ namespace concurrent::stack {
 
 
 
-    template <typename T>
+    template<typename T>
     class UnboundedLockFreeStack {
     private:
         //todo

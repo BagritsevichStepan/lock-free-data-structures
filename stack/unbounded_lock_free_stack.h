@@ -5,7 +5,7 @@
 
 namespace concurrent::stack {
 
-    template <typename T>
+    template<typename T>
     class UnboundedLockFreeStack {
     private:
         struct Node {
@@ -39,7 +39,7 @@ namespace concurrent::stack {
     };
 
     // Implementation
-    template <typename T>
+    template<typename T>
     bool UnboundedLockFreeStack<T>::IsEmpty() const {
         LFStructs::FastSharedPtr<Node> top = head_.getFast();
         return !top.get();
@@ -52,21 +52,21 @@ namespace concurrent::stack {
         } while (!head_.compareExchange(new_head->prev_.get(), std::move(new_head)));
     }
 
-    template <typename T>
+    template<typename T>
     void UnboundedLockFreeStack<T>::Push(const T& element) {
         LFStructs::SharedPtr<Node> new_head{new Node()};
         new_head->data_ = element;
         Push(new_head);
     }
 
-    template <typename T>
+    template<typename T>
     void UnboundedLockFreeStack<T>::Push(T&& element) {
         LFStructs::SharedPtr<Node> new_head{new Node()};
         new_head->data_ = std::move(element);
         Push(new_head);
     }
 
-    template <typename T>
+    template<typename T>
     bool UnboundedLockFreeStack<T>::Pop(T& element) {
         LFStructs::FastSharedPtr<Node> top = head_.getFast();
         if (!top.get()) {
