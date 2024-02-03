@@ -4,33 +4,17 @@
 #include <atomic>
 #include <utility>
 #include <type_traits>
-#include <boost/atomic.hpp>
 
+#include "utils.h"
 #include "lock.h"
 #include "wait.h"
+#include "cache_line.h"
+#include "atomic_memcpy.h"
 
 namespace concurrent::lock {
 
-    namespace details {
-
-        template<typename T>
-        concept IsTriviallyCopyable = std::is_trivially_copyable_v<T>;
-
-        using MaxBitsType = uintmax_t;
-
-        template<typename T>
-        void atomic_memcpy_load(void* dest, const void* src, std::size_t from, std::size_t to);
-
-        void atomic_memcpy_load(void* dest, const void* src, std::size_t count);
-
-        template<typename T>
-        void atomic_memcpy_store(void* dest, const void* src, std::size_t from, std::size_t to);
-
-        void atomic_memcpy_store(void* dest, const void* src, std::size_t count);
-    }
-
     template<typename T>
-    requires details::IsTriviallyCopyable<T>
+    requires utils::IsTriviallyCopyable<T>
     class alignas(concurrent::cache::kCacheLineSize) SeqLockAtomic;
 
     class alignas(concurrent::cache::kCacheLineSize) SeqLock {
@@ -44,23 +28,21 @@ namespace concurrent::lock {
         SeqLock& operator=(const SeqLock&) = delete;
         SeqLock& operator=(SeqLock&&) = delete;
 
+        Counter Load(std::memory_order memory_order = std::memory_order_seq_cst);
+
         Counter Lock();
         void Unlock(Counter seq);
 
         ~SeqLock() = default;
 
-        template<typename T>
-        requires details::IsTriviallyCopyable<T>
-        friend class SeqLockAtomic;
-
-    private:
         static bool IsLocked(Counter seq);
 
+    private:
         std::atomic<Counter> seq_{0};
     };
 
     template<typename T>
-    requires details::IsTriviallyCopyable<T>
+    requires utils::IsTriviallyCopyable<T>
     class alignas(concurrent::cache::kCacheLineSize) SeqLockAtomic {
     public:
         explicit SeqLockAtomic(T data);
@@ -83,40 +65,44 @@ namespace concurrent::lock {
 
     // Implementation
     template<typename T>
-    requires details::IsTriviallyCopyable<T>
+    requires utils::IsTriviallyCopyable<T>
     SeqLockAtomic<T>::SeqLockAtomic(T data) : data_(std::move(data)) {}
 
     template<typename T>
-    requires details::IsTriviallyCopyable<T>
+    requires utils::IsTriviallyCopyable<T>
     T SeqLockAtomic<T>::Load() {
         T loaded;
         SeqLock::Counter seq0;
         SeqLock::Counter seq1;
 
         do {
-            seq0 = seq_lock_.seq_.load(std::memory_order_acquire);
+            seq0 = seq_lock_.Load(std::memory_order_acquire);
 
-            details::atomic_memcpy_load(&loaded, &data_, sizeof(loaded));
+            memcpy::atomic_memcpy_load(&loaded, &data_, sizeof(loaded));
             std::atomic_thread_fence(std::memory_order_acquire);
 
-            seq1 = seq_lock_.seq_.load(std::memory_order_relaxed);
+            seq1 = seq_lock_.Load(std::memory_order_relaxed);
         } while (SeqLock::IsLocked(seq0) || seq0 != seq1);
 
         return loaded;
     }
 
     template<typename T>
-    requires details::IsTriviallyCopyable<T>
+    requires utils::IsTriviallyCopyable<T>
     void SeqLockAtomic<T>::Store(const T& desired) {
         SeqLock::Counter seq = seq_lock_.Lock();
 
         std::atomic_thread_fence(std::memory_order_release);
-        details::atomic_memcpy_store(&data_, &desired, sizeof(desired));
+        memcpy::atomic_memcpy_store(&data_, &desired, sizeof(desired));
 
         seq_lock_.Unlock(seq);
     }
 
     // SeqLock
+    SeqLock::Counter SeqLock::Load(std::memory_order memory_order) {
+        return seq_.load(memory_order);
+    }
+
     SeqLock::Counter SeqLock::Lock() {
         Counter seq = seq_.load(std::memory_order_relaxed);
 
@@ -142,42 +128,6 @@ namespace concurrent::lock {
         return seq & 1U;
     }
 
-    // details
-    namespace details {
-
-        void atomic_memcpy_load(void* dest, const void* src, std::size_t count) {
-            const std::size_t max_bits_type_count = count / sizeof(MaxBitsType);
-            const std::size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
-
-            atomic_memcpy_load<MaxBitsType>(dest, src, 0, max_bits_type_count);
-            atomic_memcpy_load<char>(dest, src, max_bits_type_bytes_count, count);
-        }
-
-        template<typename T>
-        void atomic_memcpy_load(void* dest, const void* src, std::size_t from, std::size_t to) {
-            for (std::size_t i = from; i < to; ++i) {
-                static_cast<T*>(dest)[i] = boost::atomic_ref<const T>(static_cast<const T*>(src)[i])
-                        .load(boost::memory_order_relaxed);
-            }
-        }
-
-        void atomic_memcpy_store(void* dest, const void* src, std::size_t count) {
-            const std::size_t max_bits_type_count = count / sizeof(MaxBitsType);
-            const std::size_t max_bits_type_bytes_count = max_bits_type_count * sizeof(MaxBitsType);
-
-            atomic_memcpy_store<MaxBitsType>(dest, src, 0, max_bits_type_count);
-            atomic_memcpy_store<char>(dest, src, max_bits_type_bytes_count, count);
-        }
-
-        template<typename T>
-        void atomic_memcpy_store(void* dest, const void* src, std::size_t from, std::size_t to) {
-            for (std::size_t i = from; i < to; ++i) {
-                boost::atomic_ref<T>(static_cast<T*>(dest)[i])
-                        .store(static_cast<const T*>(src)[i], boost::memory_order_relaxed);
-            }
-        }
-
-    }
 } // End of namespace concurrent::lock
 
 #endif //LOCK_FREE_DATA_STRUCTURES_SEQ_LOCK_H
