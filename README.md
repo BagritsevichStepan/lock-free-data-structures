@@ -136,7 +136,7 @@ bool Read(Message& message);
 void UpdateIndexes();
 ```
 
-The `Read` method In addition, `SpinLock` uses `PAUSE` instruction when the loaded flag is locked. It is needed to reduce power usage and contention on the load-store units. See [concurrent::wait::Wait](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/wait.h).
+The `Read` method waits for the message to be written. If the reading fails, the `PAUSE` instruction is called (see [concurrent::wait::Wait](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/wait.h)). If the reader has missed a message in the cell (the counter has increased by more than 2), false is returned. In other words, it means that the reader is late and, for example, can be stopped.
 
 
 ## <a name="spmc_queue_bench"></a>Benchmarks
