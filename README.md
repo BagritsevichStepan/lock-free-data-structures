@@ -138,6 +138,8 @@ void UpdateIndexes();
 
 The `Read` method waits for the message to be written. If the reading fails, the `PAUSE` instruction is called (see [concurrent::wait::Wait](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/wait.h)). If the reader has missed a message in the cell (the counter has increased by more than 2), false is returned. In other words, it means that the reader is late and, for example, can be stopped.
 
+The `TryRead` method is non-waiting version of `Read` method. It returns 3 times of values:
+1. returned value < 0 - 
 
 ## <a name="spmc_queue_bench"></a>Benchmarks
 Comming soon...
