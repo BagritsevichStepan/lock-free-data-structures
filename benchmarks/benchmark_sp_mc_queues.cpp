@@ -10,7 +10,6 @@ namespace {
         constexpr Message() = default;
         constexpr explicit Message(int x) : x_(x) {}
         constexpr ~Message() = default;
-
         int x_{0};
     };
 
@@ -41,7 +40,6 @@ int main() {
         for (int i = 0; i < 100; i++) {
             assert(reader.Read(result));
             assert(result.x_ == i);
-            reader.UpdateIndexes();
         }
     });
 

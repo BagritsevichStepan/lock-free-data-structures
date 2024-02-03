@@ -349,6 +349,7 @@ namespace concurrent::queue {
         while (true) {
             int32_t result = TryRead(message);
             if (!result) {
+                UpdateIndexes();
                 return true;
             } else if (result > 0) {
                 return false;
