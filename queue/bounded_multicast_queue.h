@@ -132,9 +132,9 @@ namespace concurrent::queue {
             Reader& operator=(const Reader& other);
             Reader& operator=(Reader&& other) noexcept;
 
-            // < 0 - The data was not updated. The reader must wait. (real_seq < expected_seq)
-            // == 0 - The expected data version was read. (real_seq == expected_seq)
-            // > 0 - The data was overwritten several times. The reader is late. (real_seq > expected_seq)
+            // < 0 - The data was not updated. The reader must wait
+            // == 0 - The expected data version was read. Please, call the UpdateIndexes method to read next data
+            // > 0 - The data was overwritten several times. The reader is late
             int32_t TryRead(Message& message);
 
             template<typename T, typename = std::enable_if_t<utils::IsTriviallyCopyableAndDestructible<T>>>
@@ -147,7 +147,7 @@ namespace concurrent::queue {
             template<typename T, typename = std::enable_if_t<utils::IsTriviallyCopyableAndDestructible<T>>>
             bool Read(T& message);
 
-            // The function must be called if the Read() function returned 0
+            // The function must be called if the TryRead() function returned 0
             void UpdateIndexes();
 
             void Swap(Reader& other) noexcept;
