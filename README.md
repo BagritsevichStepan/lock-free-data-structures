@@ -109,8 +109,17 @@ auto reader_thread = std::thread([&q]() {
 });
 ```
 A single producer multi-consumer lock-free multicast queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer).
+
+The queue is used in multicast mode - every message written by the producer is read by all consumers. So it can be easily used for inter-thread or inter-process communication. For example, in HFT it is used to share data between market data receiver and trading strategies (OMS). 
+
+It supports only **trivially copyable** and **trivially destructible** types.
+
 ### <a name="spmc_queue_seqlock"></a>SeqLock Approach
-The queue is based on a
+A key feature of this queue is that the writer is never blocked by readers, it continuously writes data.
+
+This is achieved using an approach similar to [seqlock](#lock_seqlock):
+
+before writing, the writer increments the counter, which is called the sequence number, by 1 (it becomes odd), and after writing, increases the counter by 1 (the counter becomes even). Readers check at the time that the counter values have not changed before and after reading (at the same time, the counter must be even, i.e. there is no writing process).
 
 ## <a name="spmc_queue_bench"></a>Benchmarks
 Comming soon...
