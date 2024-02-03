@@ -9,6 +9,7 @@ All implementations are faster than their analogs from other libraries, such as 
     * [Cache Coherence. False Sharing](#spsc_queue_false_sharing)
     * [Batched Implementation](#spsc_queue_batched_impl)
     * [Benchmarks](#spsc_queue_bench)
++ [Multicast SPMCQueue](#spmc_queue)
 + [MPMCQueue](#mpmcqueue)
     * [Generations Approach](#mpmc_queue_generation)
     * [Benchmarks](#mpmc_queue_bench)
@@ -84,6 +85,28 @@ To get full information on how the measurements were taking, please see [Benchma
 | `boost::lockfree::spsc_queue` | 11345 | 449 |
 | `folly::ProducerConsumerQueue` | 14614 | 321 |
 | `moodycamel::ReaderWriterQueue` | 21815 | 273 |
+
+# <a name="spmc_queue"></a>Multicast SPMCQueue
+```cpp
+concurrent::queue::BoundedMulticastQueue<capacity, sizeof(Message), alignof(Message)> q{};
+auto writer_thread = std::thread([&q]() {
+   Writer writer{&q};
+   for (int i = 0; i < 100; i++) {
+      Message message{i};
+      writer.Write(i);
+   }
+});
+auto reader_thread = std::thread([&q]() {
+   Reader reader{&q};
+   Message result{};
+   for (int i = 0; i < 100; i++) {
+      assert(reader.Read(result));
+      assert(result.x_ == i);
+      reader.UpdateIndexes();
+   }
+});
+```
+A single producer multi-consumer lock-free multicast queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer).
 
 # MPMCQueue
 ```cpp
