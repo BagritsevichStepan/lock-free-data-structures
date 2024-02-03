@@ -10,6 +10,8 @@ All implementations are faster than their analogs from other libraries, such as 
     * [Batched Implementation](#spsc_queue_batched_impl)
     * [Benchmarks](#spsc_queue_bench)
 + [Multicast SPMCQueue](#spmc_queue)
+    * [SeqLock Approach](#spmc_queue_seqlock)
+    * [Benchmarks](#spmc_queue_bench)
 + [MPMCQueue](#mpmcqueue)
     * [Generations Approach](#mpmc_queue_generation)
     * [Benchmarks](#mpmc_queue_bench)
@@ -107,6 +109,11 @@ auto reader_thread = std::thread([&q]() {
 });
 ```
 A single producer multi-consumer lock-free multicast queue implementation based on a [ring buffer](https://en.wikipedia.org/wiki/Circular_buffer).
+### <a name="spmc_queue_seqlock"></a>SeqLock Approach
+The queue is based on a
+
+## <a name="spmc_queue_bench"></a>Benchmarks
+Comming soon...
 
 # MPMCQueue
 ```cpp
