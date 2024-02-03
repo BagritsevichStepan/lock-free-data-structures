@@ -105,7 +105,6 @@ auto reader_thread = std::thread([&q]() {
    for (int i = 0; i < 100; i++) {
       assert(reader.Read(result));
       assert(result.x_ == i);
-      reader.UpdateIndexes();
    }
 });
 ```
@@ -124,15 +123,20 @@ Before writing, the writer increments the counter, which is called the sequence 
 
 ### <a name="spmc_queue_reader"></a>Reader Interface
 ```cpp
-// < 0 - The data was not updated. The reader must wait. (real_seq < expected_seq)
-// == 0 - The expected data version was read. (real_seq == expected_seq)
-// > 0 - The data was overwritten several times. The reader is late. (real_seq > expected_seq)
+// < 0 - The data was not updated. The reader must wait
+// == 0 - The expected data version was read
+// > 0 - The data was overwritten several times. The reader is late
 int32_t TryRead(Message& message);
 
 // true - The message was read
 // false - The data was overwritten several times. The reader is late
 bool Read(Message& message);
+
+// The function must be called if the TryRead() function returned 0
+void UpdateIndexes();
 ```
+
+The `Read` method In addition, `SpinLock` uses `PAUSE` instruction when the loaded flag is locked. It is needed to reduce power usage and contention on the load-store units. See [concurrent::wait::Wait](https://github.com/BagritsevichStepan/lock-free-data-structures/blob/main/utils/wait.h).
 
 
 ## <a name="spmc_queue_bench"></a>Benchmarks
