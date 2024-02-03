@@ -5,7 +5,7 @@
 
 namespace concurrent::lock {
 
-    template <typename Derived>
+    template<typename Derived>
     class alignas(concurrent::cache::kCacheLineSize) Lock {
     public:
         Lock() = default;
@@ -27,7 +27,6 @@ namespace concurrent::lock {
         static_cast<Derived*>(this)->Unlock();
     }
 
-
-}
+} // End of namespace concurrent::lock
 
 #endif //LOCK_FREE_LOCK_H

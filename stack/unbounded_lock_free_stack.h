@@ -1,6 +1,7 @@
 #ifndef LOCK_FREE_DATA_STRUCTURES_UNBOUNDED_LOCK_FREE_STACK_H
 #define LOCK_FREE_DATA_STRUCTURES_UNBOUNDED_LOCK_FREE_STACK_H
 
+#include "concurrent_stack.h"
 #include "atomic_shared_ptr/atomic_shared_ptr.h"
 
 namespace concurrent::stack {

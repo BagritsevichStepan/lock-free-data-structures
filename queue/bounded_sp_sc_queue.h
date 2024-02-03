@@ -40,10 +40,10 @@ namespace concurrent::queue {
         template<typename = std::enable_if_t<std::is_copy_constructible_v<T> || std::is_move_constructible_v<T>, bool>>
         bool Dequeue(T& element);
 
-        bool IsEmptyConsumer(); // IsEmpty method for consumer. It is faster than IsEmptyProducer()
-        bool IsEmptyProducer() const noexcept; // IsEmpty method for producer
-        std::size_t GetSize() const noexcept;
-        std::size_t GetCapacity() const noexcept;
+        [[nodiscard]] bool IsEmptyConsumer(); // IsEmpty method for consumer. It is faster than IsEmptyProducer()
+        [[nodiscard]] bool IsEmptyProducer() const noexcept; // IsEmpty method for producer
+        [[nodiscard]] std::size_t GetSize() const noexcept;
+        [[nodiscard]] std::size_t GetCapacity() const noexcept;
 
         ~BoundedSPSCQueue() = default;
 

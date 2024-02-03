@@ -73,9 +73,9 @@ namespace concurrent::queue {
         bool TryDequeue(T& element);
 
 
-        std::size_t GetSize() const noexcept;
-        bool IsEmpty() const noexcept;
-        std::size_t GetCapacity() const noexcept;
+        [[nodiscard]] std::size_t GetSize() const noexcept;
+        [[nodiscard]] bool IsEmpty() const noexcept;
+        [[nodiscard]] std::size_t GetCapacity() const noexcept;
 
         ~BoundedMPMCQueue() = default;
 

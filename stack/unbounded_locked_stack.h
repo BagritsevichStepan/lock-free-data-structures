@@ -4,6 +4,7 @@
 #include <stack>
 #include <mutex>
 
+#include "concurrent_stack.h"
 #include "spin_lock.h"
 
 
@@ -13,14 +14,14 @@ namespace concurrent::stack {
     class UnboundedLockedStack;
 
 
-    namespace details {
+    namespace details::unbounded_locked_stack {
 
         template<typename T, typename DerivedLock>
         using UnboundedBaseLockedStack = UnboundedLockedStack<T, concurrent::lock::Lock<DerivedLock>>;
     }
 
     template<typename T>
-    using UnboundedSpinLockedStack = details::UnboundedBaseLockedStack<T, concurrent::lock::SpinLock>;
+    using UnboundedSpinLockedStack = details::unbounded_locked_stack::UnboundedBaseLockedStack<T, concurrent::lock::SpinLock>;
 
     template<typename T>
     using UnboundedMutexLockedStack = UnboundedLockedStack<T, std::mutex>;

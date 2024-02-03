@@ -4,19 +4,16 @@
 #include <pthread.h>
 #include <sched.h>
 
+#include "utils.h"
+
 namespace concurrent::benchmark {
 
-    namespace details {
-
-        using Time = std::chrono::time_point<std::chrono::steady_clock>;
-
-    }
-
-    template<auto Number>
-    concept IsEven = !(Number & 1);
+    using IterationsCount = int64_t;
+    using Time = std::chrono::time_point<std::chrono::steady_clock>;
 
     inline constexpr int kSuccessfullyPinnedThread = 0;
     inline constexpr int kFailedToPinThread = -1;
+
 
     int PinThread(int cpu) {
 #ifdef __linux__
@@ -28,7 +25,7 @@ namespace concurrent::benchmark {
         cpu_set_t cpu_set;
         CPU_ZERO(&cpu_set);
         CPU_SET(cpu, &cpu_set);
-        if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set) == -1) {
+        if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpu_set)) {
             std::cerr << "Failed during pthread_setaffinity_np" << std::endl;
             return kFailedToPinThread;
         }
@@ -39,9 +36,6 @@ namespace concurrent::benchmark {
         return kFailedToPinThread;
 #endif
     }
-
-
-    using IterationsCount = int64_t;
 
     IterationsCount GetThroughput(IterationsCount iterations, details::Time start, details::Time stop) {
         return iterations * 1000000 / std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();

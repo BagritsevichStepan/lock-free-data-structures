@@ -15,7 +15,7 @@
 namespace concurrent::benchmark::stacks {
 
     template<typename Stack, std::size_t CpuNumber, typename... Args>
-    requires concurrent::benchmark::IsEven<CpuNumber>
+    requires concurrent::utils::IsEven<CpuNumber>
     void MeasureThroughput(const IterationsCount iterations, std::array<int, CpuNumber> cpu, const std::string& stack_name, Args&&... args) {
         Stack stack{std::forward<Args>(args)...};
 
