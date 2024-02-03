@@ -11,6 +11,7 @@ All implementations are faster than their analogs from other libraries, such as 
     * [Benchmarks](#spsc_queue_bench)
 + [Multicast SPMCQueue](#spmc_queue)
     * [SeqLock Approach](#spmc_queue_seqlock)
+    * [Reader Interface](#spmc_queue_reader)
     * [Benchmarks](#spmc_queue_bench)
 + [MPMCQueue](#mpmcqueue)
     * [Generations Approach](#mpmc_queue_generation)
@@ -119,7 +120,20 @@ A key feature of this queue is that the writer is never blocked by readers, it c
 
 This is achieved using an approach similar to [seqlock](#lock_seqlock):
 
-before writing, the writer increments the counter, which is called the sequence number, by 1 (it becomes odd), and after writing, increases the counter by 1 (the counter becomes even). Readers check at the time that the counter values have not changed before and after reading (at the same time, the counter must be even, i.e. there is no writing process).
+Before writing, the writer increments the counter, which is called the sequence number, by 1 (it becomes odd), and after writing, increases the counter by 1 (the counter becomes even). Readers check at the time that the counter values have not changed before and after reading (at the same time, the counter must be even, i.e. there is no writing process).
+
+### <a name="spmc_queue_reader"></a>Reader Interface
+```cpp
+// < 0 - The data was not updated. The reader must wait. (real_seq < expected_seq)
+// == 0 - The expected data version was read. (real_seq == expected_seq)
+// > 0 - The data was overwritten several times. The reader is late. (real_seq > expected_seq)
+int32_t TryRead(Message& message);
+
+// true - The message was read
+// false - The data was overwritten several times. The reader is late
+bool Read(Message& message);
+```
+
 
 ## <a name="spmc_queue_bench"></a>Benchmarks
 Comming soon...
