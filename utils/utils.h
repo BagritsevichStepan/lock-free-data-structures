@@ -1,6 +1,7 @@
 #ifndef LOCK_FREE_DATA_STRUCTURES_UTILS_H
 #define LOCK_FREE_DATA_STRUCTURES_UTILS_H
 
+#include <cstddef>
 #include <type_traits>
 
 namespace concurrent::utils {

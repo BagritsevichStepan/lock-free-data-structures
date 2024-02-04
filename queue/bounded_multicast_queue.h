@@ -15,8 +15,6 @@
 
 namespace concurrent::queue {
 
-    // todo prove move && to & and & to &
-
     template<std::size_t Capacity, std::size_t Alignment = utils::kDefaultAlignment>
     class AtomicMulticastQueueMessage;
 
@@ -299,13 +297,14 @@ namespace concurrent::queue {
 
     template<std::size_t MessagesCount, std::size_t MaxMessageSize, std::size_t MessageAlignment>
     BoundedMulticastQueue<MessagesCount, MaxMessageSize, MessageAlignment>::Reader::Reader(
-            const BoundedMulticastQueue::Reader& other) : queue_(other.queue_), head_(other.head_) {}
+            const BoundedMulticastQueue::Reader& other) : queue_(other.queue_), head_(other.head_), expected_seq_(other.expected_seq_) {}
 
     template<std::size_t MessagesCount, std::size_t MaxMessageSize, std::size_t MessageAlignment>
     BoundedMulticastQueue<MessagesCount, MaxMessageSize, MessageAlignment>::Reader::Reader(
-            BoundedMulticastQueue::Reader&& other) noexcept : queue_(other.queue_), head_(other.head_) {
+            BoundedMulticastQueue::Reader&& other) noexcept : queue_(other.queue_), head_(other.head_), expected_seq_(other.expected_seq_) {
         other.queue_ = nullptr;
         other.head_ = 0;
+        other.expected_seq_ = 2;
     }
 
     template<std::size_t MessagesCount, std::size_t MaxMessageSize, std::size_t MessageAlignment>
@@ -371,7 +370,7 @@ namespace concurrent::queue {
     template<std::size_t MessagesCount, std::size_t MaxMessageSize, std::size_t MessageAlignment>
     void BoundedMulticastQueue<MessagesCount, MaxMessageSize, MessageAlignment>::Reader::UpdateIndexes() {
         ++head_;
-        expected_seq_ += head_ >> GetSeqRightShiftValue();
+        expected_seq_ += (head_ >> GetSeqRightShiftValue()) << 1u;
         head_ &= BoundedMulticastQueue::GetIndexMask();
     }
 
@@ -381,11 +380,12 @@ namespace concurrent::queue {
         using std::swap;
         swap(queue_, other.queue_);
         swap(head_, other.head_);
+        swap(expected_seq_, other.expected_seq_);
     }
 
     template<std::size_t MessagesCount, std::size_t MaxMessageSize, std::size_t MessageAlignment>
     constexpr std::size_t BoundedMulticastQueue<MessagesCount, MaxMessageSize, MessageAlignment>::Reader::GetSeqRightShiftValue() {
-        return __builtin_ctz(GetBufferSize()) - 1;
+        return __builtin_ctz(GetBufferSize());
     }
 
 

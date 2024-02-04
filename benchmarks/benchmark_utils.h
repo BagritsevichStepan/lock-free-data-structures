@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <sched.h>
+#include <chrono>
 
 #include "utils.h"
 
@@ -37,11 +38,11 @@ namespace concurrent::benchmark {
 #endif
     }
 
-    IterationsCount GetThroughput(IterationsCount iterations, details::Time start, details::Time stop) {
+    IterationsCount GetThroughput(IterationsCount iterations, Time start, Time stop) {
         return iterations * 1000000 / std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
     }
 
-    IterationsCount GetLatency(IterationsCount iterations, details::Time start, details::Time stop) {
+    IterationsCount GetLatency(IterationsCount iterations, Time start, Time stop) {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count() / iterations;
     }
 
