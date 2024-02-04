@@ -146,7 +146,9 @@ The `TryRead` method is non-waiting version of `Read` method. It returns 3 types
 ## <a name="spmc_queue_bench"></a>Benchmarks
 Benchmark measures throughput between 1 writers and 3 readers for a queue of messages with one `int` variable.
 
-The mutlicast queue was compared with `SPSCBasedSPMCQueue`. This queue is based on n `concurrent::queue::BoundedSPSCQueue`, where `n` is the number of readers. Thus, the writer writes in a separate queue for each reader.
+The mutlicast queue was compared with `SPSCBasedSPMCQueue`. This queue is based on n `concurrent::queue::BoundedSPSCQueue`'s, where `n` is the number of readers. Thus, the writer writes in a separate queue for each reader.
+
+As a result, the multicast queue is two times faster than `concurrent::queue::SPSCBasedSPMCQueue`.
 
 To get full information on how the measurements were taking, please see [Benchmarking](#benchmarking) chapter.
 
