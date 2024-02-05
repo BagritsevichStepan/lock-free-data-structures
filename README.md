@@ -1,5 +1,5 @@
 # Lock Free Data Structures
-The repository contains low latency lock free SPSC, MPMC Queue and Stack implementations. Also there are fast SpinLock and SeqLock implementations.
+The repository contains low latency lock free SPSC, SPMC, MPMC Queue and Stack implementations. Also there are fast SpinLock and SeqLock implementations.
 
 All implementations are faster than their analogs from other libraries, such as **Folly**, or **Boost**.
 
